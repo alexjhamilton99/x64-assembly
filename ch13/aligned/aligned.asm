@@ -5,6 +5,11 @@ section .data
     pi      dq      3.14159265358979
 section .bss
 section .text
+; Program doesn't use prologues and epilogues meaning we don't build stack frames.
+; Only uses push and pop to illustrate alignment.
+; Note: if we do a certain number of calls (even or odd depending on how you start),
+; the stack will be 16-byte aligned even if we omit push/pop, and the program won't
+; crash (pure luck). 
 ;---------------------------------------------------------------------------
 func3:
     push    rbp
