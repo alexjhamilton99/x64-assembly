@@ -34,7 +34,7 @@
     14                                  section .text
     15                                      global main
     16                                  main:
-    17 00000000 4889E5                      mov rbp, rsp; for correct debugging
+    17 00000000 4889E5                      mov     rbp, rsp            ; for correct debugging
     18 00000003 55                          push    rbp                 ; necessary b/c of printf with floats
     19 00000004 488D2C24                    lea     rbp, [rsp]
     20                                      
@@ -52,7 +52,7 @@
     29 00000031 [00000000]         
     30 00000035 F20F581425-                 addsd   xmm2, [number2]     ; add double precision to xmm
     30 0000003A [08000000]         
-    31                                      ; print difference
+    31                                      ; print sum
     32 0000003E F20F100425-                 movsd   xmm0, [number1]
     32 00000043 [00000000]         
     33 00000047 F20F100C25-                 movsd   xmm1, [number2]

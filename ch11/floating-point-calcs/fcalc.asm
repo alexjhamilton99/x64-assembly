@@ -14,7 +14,7 @@ section .bss
 section .text
     global main
 main:
-    mov rbp, rsp; for correct debugging
+    ;mov     rbp, rsp            ; for correct debugging
     push    rbp                 ; necessary b/c of printf with floats
     lea     rbp, [rsp]
     
@@ -28,7 +28,7 @@ main:
     ; sum
     movsd   xmm2, [number1]     ; double precision float into xmm
     addsd   xmm2, [number2]     ; add double precision to xmm
-    ; print difference
+    ; print sum
     movsd   xmm0, [number1]
     movsd   xmm1, [number2]
     lea     rdi, f_sum
@@ -36,11 +36,11 @@ main:
     call    printf
     
     ; difference
-    movsd   xmm2, [number1]     ; double precision float into xmm
-    subsd   xmm2, [number2]     ; subtract from xmm
+    movsd   xmm2, [number2]     ; double precision float into xmm
+    subsd   xmm2, [number1]     ; subtract from xmm
     ; print difference
-    movsd   xmm0, [number1]
     movsd   xmm0, [number2]
+    movsd   xmm1, [number1]
     lea     rdi, f_dif
     mov     rax, 3              ; three floats
     call    printf
@@ -56,12 +56,12 @@ main:
     call    printf
     
     ; division
-    movsd   xmm2, [number1]     ; double precision float into xmm
-    divsd   xmm2, [number2]     ; divide xmm0
+    movsd   xmm2, [number2]     ; double precision float into xmm
+    divsd   xmm2, [number1]     ; divide xmm0
     ; print the quotient
     lea     rdi, f_div
-    movsd   xmm0, [number1]
-    movsd   xmm1, [number2]
+    movsd   xmm0, [number2]
+    movsd   xmm1, [number1]
     mov     rax, 1              ; one float
     call    printf
     
