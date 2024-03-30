@@ -54,8 +54,3 @@ poploop:
     pop     rbp
     ret
     
-    
-    
-    mov     rsp, rbp
-    pop     rbp
-    ret

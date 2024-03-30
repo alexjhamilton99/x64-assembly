@@ -64,8 +64,3 @@
     54 00000089 5D                          pop     rbp
     55 0000008A C3                          ret
     56                                      
-    57                                      
-    58                                      
-    59 0000008B 4889EC                      mov     rsp, rbp
-    60 0000008E 5D                          pop     rbp
-    61 0000008F C3                          ret
