@@ -1,0 +1,31 @@
+     1                                  ; circle.asm
+     2                                  extern pi
+     3                                  section .data
+     4                                  section .bss
+     5                                  section .text
+     6                                  
+     7                                  global c_area
+     8                                  c_area:
+     9                                      section .text
+    10 00000000 55                          push    rbp
+    11 00000001 4889E5                      mov     rbp, rsp
+    12 00000004 F20F100C25-                 movsd   xmm1, qword [pi]
+    12 00000009 [00000000]         
+    13 0000000D F20F59C0                    mulsd   xmm0, xmm0          ; radius is already in xmm0 register
+    14 00000011 F20F59C1                    mulsd   xmm0, xmm1
+    15 00000015 4889EC                      mov     rsp, rbp
+    16 00000018 5D                          pop     rbp
+    17 00000019 C3                          ret
+    18                                      
+    19                                  global c_circum
+    20                                  c_circum:
+    21                                      section .text
+    22 0000001A 55                          push    rbp
+    23 0000001B 4889E5                      mov     rbp, rsp
+    24 0000001E F20F100C25-                 movsd   xmm1, qword [pi]
+    24 00000023 [00000000]         
+    25 00000027 F20F58C0                    addsd   xmm0, xmm0          ; radius is already in xmm0 register
+    26 0000002B F20F59C1                    mulsd   xmm0, xmm1
+    27 0000002F 4889EC                      mov     rsp, rbp
+    28 00000032 5D                          pop     rbp
+    29 00000033 C3                          ret
