@@ -1,0 +1,130 @@
+     1                                  ; console2.asm
+     2                                  section .data
+     3 00000000 48656C6C6F2C20576F-         msg1        db      "Hello, World!",10,0
+     3 00000009 726C64210A00       
+     4 0000000F 596F7572207475726E-         msg2        db      "Your turn (only a-z): ",0
+     4 00000018 20286F6E6C7920612D-
+     4 00000021 7A293A2000         
+     5 00000026 596F7520616E737765-         msg3        db      "You answered: ",0
+     5 0000002F 7265643A2000       
+     6                                      inputlen    equ     10
+     7 00000035 0A                          NL          db      0xa
+     8                                  section .bss
+     9 00000000 <res Bh>                    input       resb    inputlen+1      ; space for ending 0
+    10                                  section .text
+    11                                      global main
+    12                                  main:
+    13 00000000 55                          push    rbp
+    14 00000001 4889E5                      mov     rbp, rsp
+    15                                      
+    16 00000004 48BF-                       mov     rdi, msg1
+    16 00000006 [0000000000000000] 
+    17 0000000E E852000000                  call    prints
+    18                                      
+    19 00000013 48BF-                       mov     rdi, msg2
+    19 00000015 [0F00000000000000] 
+    20 0000001D E843000000                  call    prints
+    21                                      
+    22 00000022 48BF-                       mov     rdi, input
+    22 00000024 [0000000000000000] 
+    23 0000002C BE0A000000                  mov     rsi, inputlen
+    24 00000031 E863000000                  call    reads
+    25                                      
+    26 00000036 48BF-                       mov     rdi, msg3
+    26 00000038 [2600000000000000] 
+    27 00000040 E820000000                  call    prints
+    28                                      
+    29 00000045 48BF-                       mov     rdi, input
+    29 00000047 [0000000000000000] 
+    30 0000004F E811000000                  call    prints
+    31 00000054 48BF-                       mov     rdi, NL
+    31 00000056 [3500000000000000] 
+    32 0000005E E802000000                  call    prints
+    33                                      
+    34 00000063 C9                          leave
+    35 00000064 C3                          ret
+    36                                  
+    37                                  prints:
+    38 00000065 55                          push    rbp
+    39 00000066 4889E5                      mov     rbp, rsp
+    40                                      
+    41 00000069 4154                        push    r12         ; save callee
+    42                                      
+    43                                      ; count characters
+    44 0000006B 4831D2                      xor     rdx, rdx    ; length in rdx
+    45 0000006E 4989FC                      mov     r12, rdi
+    46                                      
+    47                                  .lengthloop:
+    48 00000071 41803C2400                  cmp     byte [r12], 0
+    49 00000076 7408                        je      .lengthfound
+    50                                      
+    51 00000078 48FFC2                      inc     rdx
+    52 0000007B 49FFC4                      inc     r12
+    53 0000007E EBF1                        jmp     .lengthloop
+    54                                      
+    55                                  .lengthfound:           ; print strin
+    56 00000080 4883FA00                    cmp     rdx, 0
+    57 00000084 740F                        je      .done
+    58                                      
+    59 00000086 4889FE                      mov     rsi, rdi    ; rdi contains string's address
+    60 00000089 B801000000                  mov     rax, 1      ; 1 = write
+    61 0000008E BF01000000                  mov     rdi, 1      ; 1 = stdout
+    62 00000093 0F05                        syscall
+    63                                      
+    64                                  .done:
+    65 00000095 415C                        pop     r12
+    66                                      
+    67 00000097 C9                          leave
+    68 00000098 C3                          ret
+    69                                      
+    70                                  reads:
+    71                                  section .data
+    72                                  section .bss
+    73 0000000B ??                          .inputchar  resb    1
+    74                                  section .text
+    75 00000099 55                          push    rbp
+    76 0000009A 4889E5                      mov     rbp, rsp
+    77                                      
+    78 0000009D 4154                        push    r12         ; callee saved
+    79 0000009F 4155                        push    r13         ; callee saved
+    80 000000A1 4156                        push    r14         ; callee saved
+    81                                      
+    82 000000A3 4989FC                      mov     r12, rdi    ; input buffer's address
+    83 000000A6 4989F5                      mov     r13, rsi    ; max len in r13
+    84 000000A9 4D31F6                      xor     r14, r14    ; character counter
+    85                                      
+    86                                  .readc:
+    87 000000AC B800000000                  mov     rax, 0              ; read
+    88 000000B1 BF01000000                  mov     rdi, 1              ; stdin
+    89 000000B6 488D3425[0B000000]          lea     rsi, [.inputchar]   ; input's address
+    90 000000BE BA01000000                  mov     rdx, 1              ; # of characters to read
+    91 000000C3 0F05                        syscall
+    92                                      
+    93 000000C5 8A0425[0B000000]            mov     al, [.inputchar]
+    94 000000CC 3A0425[35000000]            cmp     al, byte [NL]       ; is it a new line char?
+    95 000000D3 7419                        je      .done
+    96                                      
+    97 000000D5 3C61                        cmp     al, 97              ; 97 is a's ASCII code
+    98 000000D7 7CD3                        jl      .readc              ; if lower, ignore it
+    99                                      
+   100 000000D9 3C7A                        cmp     al, 122             ; 122 is z's ASCII code
+   101 000000DB 7FCF                        jg      .readc              ; if higher, ignore it
+   102                                      
+   103 000000DD 49FFC6                      inc     r14                 ; increment counter
+   104 000000E0 4D39EE                      cmp     r14, r13
+   105 000000E3 77C7                        ja      .readc              ; reached buffer's max
+   106                                      
+   107 000000E5 41880424                    mov     byte [r12], al      ; safe char in buffer
+   108 000000E9 49FFC4                      inc     r12                 ; point to next char in buffer
+   109 000000EC EBBE                        jmp     .readc
+   110                                      
+   111                                  .done:  
+   112 000000EE 49FFC4                      inc     r12
+   113 000000F1 41C6042400                  mov     byte [r12], 0       ; add ending 0 to input buffer
+   114                                      
+   115 000000F6 415E                        pop     r14                 ; callee saved
+   116 000000F8 415D                        pop     r13                 ; callee saved
+   117 000000FA 415C                        pop     r12                 ; callee saved
+   118                                      
+   119 000000FC C9                          leave
+   120 000000FD C3                          ret
