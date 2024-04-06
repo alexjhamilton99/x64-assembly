@@ -1,0 +1,33 @@
+     1                                  ; circle.asm
+     2                                  section .data
+     3 00000000 50455254FB210940            pi      dq      3.141592654
+     4                                  section .bss
+     5                                  section .text
+     6                                  
+     7                                  global carea
+     8                                  carea:
+     9                                      section .text
+    10 00000000 55                              push    rbp
+    11 00000001 4889E5                          mov     rbp, rsp
+    12                                          
+    13 00000004 F20F100C25-                     movsd   xmm1, qword [pi]
+    13 00000009 [00000000]         
+    14 0000000D F20F59C0                        mulsd   xmm0, xmm0          ; xmm0 contains the radius
+    15 00000011 F20F59C1                        mulsd   xmm0, xmm1
+    16                                          
+    17 00000015 C9                              leave
+    18 00000016 C3                              ret
+    19                                          
+    20                                  global ccircum
+    21                                  ccircum:
+    22                                      section .text
+    23 00000017 55                              push    rbp
+    24 00000018 4889E5                          mov     rbp, rsp
+    25                                          
+    26 0000001B F20F100C25-                     movsd   xmm1, qword [pi]
+    26 00000020 [00000000]         
+    27 00000024 F20F58C0                        addsd   xmm0, xmm0          ; xmm0 contains the radius
+    28 00000028 F20F59C1                        mulsd   xmm0, xmm1
+    29                                          
+    30 0000002C C9                              leave
+    31 0000002D C3                              ret
