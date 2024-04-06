@@ -1,0 +1,182 @@
+     1                                  ; bits2.asm
+     2                                  extern printf
+     3                                  section .data
+     4 00000000 4E756D626572203120-         msgn1   db  "Number 1 is = %d",0
+     4 00000009 6973203D20256400   
+     5 00000011 4E756D626572203220-         msgn2   db  "Number 2 is = %d",0
+     5 0000001A 6973203D20256400   
+     6                                  
+     7 00000022 53484C2032203D204F-         msg1    db  "SHL 2 = OK multiply by 4",0
+     7 0000002B 4B206D756C7469706C-
+     7 00000034 79206279203400     
+     8 0000003B 5348522032203D2057-         msg2    db  "SHR 2 = WRONG divide by 4",0
+     8 00000044 524F4E472064697669-
+     8 0000004D 6465206279203400   
+     9 00000055 53414C2032203D2063-         msg3    db  "SAL 2 = correctly multiply by 4",0
+     9 0000005E 6F72726563746C7920-
+     9 00000067 6D756C7469706C7920-
+     9 00000070 6279203400         
+    10 00000075 5341522032203D2063-         msg4    db  "SAR 2 = correctly divide by 4",0
+    10 0000007E 6F72726563746C7920-
+    10 00000087 646976696465206279-
+    10 00000090 203400             
+    11 00000093 5348522032203D204F-         msg5    db  "SHR 2 = OK divide by 4",0
+    11 0000009C 4B2064697669646520-
+    11 000000A5 6279203400         
+    12                                      
+    13 000000AA 0800000000000000            number1 dq  8
+    14 000000B2 F8FFFFFFFFFFFFFF            number2 dq  -8
+    15 000000BA 0000000000000000            result  dq  0
+    16                                  section .bss
+    17                                  section .text
+    18                                      global main
+    19                                  main:
+    20 00000000 55                          push    rbp
+    21 00000001 4889E5                      mov     rbp, rsp
+    22                                      
+    23                                      ; SHL positive number
+    24 00000004 48BE-                       mov     rsi, msg1
+    24 00000006 [2200000000000000] 
+    25 0000000E E873010000                  call    printmsg
+    26                                      
+    27 00000013 488B3425[AA000000]          mov     rsi, [number1]
+    28 0000001B E87B010000                  call    printnbr
+    29                                      
+    30 00000020 488B0425[AA000000]          mov     rax, [number1]
+    31 00000028 48C1E002                    shl     rax, 2          ; multiply by 4 (logic)
+    32 0000002C 4889C6                      mov     rsi, rax
+    33 0000002F E87C010000                  call    printres
+    34                                      
+    35                                      ; SHL negative number
+    36 00000034 48BE-                       mov     rsi, msg1
+    36 00000036 [2200000000000000] 
+    37 0000003E E843010000                  call    printmsg
+    38                                      
+    39 00000043 488B3425[B2000000]          mov     rsi, [number2]
+    40 0000004B E84B010000                  call    printnbr
+    41                                      
+    42 00000050 488B0425[B2000000]          mov     rax, [number2]
+    43 00000058 48C1E002                    shl     rax, 2          ; multiply by 4 (logic)
+    44 0000005C 4889C6                      mov     rsi, rax
+    45 0000005F E84C010000                  call    printres
+    46                                      
+    47                                      ; SAL positive number
+    48 00000064 48BE-                       mov     rsi, msg3
+    48 00000066 [5500000000000000] 
+    49 0000006E E813010000                  call    printmsg
+    50                                      
+    51 00000073 488B3425[AA000000]          mov     rsi, [number1]
+    52 0000007B E81B010000                  call    printnbr
+    53                                      
+    54 00000080 488B0425[AA000000]          mov     rax, [number1]
+    55 00000088 48C1E002                    sal     rax, 2          ; multiply by 4 (arithmetic)
+    56 0000008C 4889C6                      mov     rsi, rax
+    57 0000008F E81C010000                  call    printres
+    58                                      
+    59                                      ; SAL negative number
+    60 00000094 48BE-                       mov     rsi, msg3
+    60 00000096 [5500000000000000] 
+    61 0000009E E8E3000000                  call    printmsg
+    62                                      
+    63 000000A3 488B3425[B2000000]          mov     rsi, [number2]
+    64 000000AB E8EB000000                  call    printnbr
+    65                                      
+    66 000000B0 488B0425[B2000000]          mov     rax, [number2]
+    67 000000B8 48C1E002                    sal     rax, 2          ; multiply by 4 (arithmetic)
+    68 000000BC 4889C6                      mov     rsi, rax
+    69 000000BF E8EC000000                  call    printres
+    70                                      
+    71                                      ; SHR positive number
+    72 000000C4 48BE-                       mov     rsi, msg5
+    72 000000C6 [9300000000000000] 
+    73 000000CE E8B3000000                  call    printmsg
+    74                                      
+    75 000000D3 488B3425[AA000000]          mov     rsi, [number1]
+    76 000000DB E8BB000000                  call    printnbr
+    77                                      
+    78 000000E0 488B0425[AA000000]          mov     rax, [number1]
+    79 000000E8 48C1E802                    shr     rax, 2          ; divide by 4 (logic)
+    80 000000EC 4889C6                      mov     rsi, rax
+    81 000000EF E8BC000000                  call    printres
+    82                                      
+    83                                      ; SHR negative number
+    84 000000F4 48BE-                       mov     rsi, msg2
+    84 000000F6 [3B00000000000000] 
+    85 000000FE E883000000                  call    printmsg
+    86                                      
+    87 00000103 488B3425[B2000000]          mov     rsi, [number2]
+    88 0000010B E88B000000                  call    printnbr
+    89                                      
+    90 00000110 488B0425[B2000000]          mov     rax, [number2]
+    91 00000118 48C1E802                    shr     rax, 2          ; divide by 4 (logic)
+    92 0000011C 4889C6                      mov     rsi, rax
+    93 0000011F E88C000000                  call    printres
+    94                                      
+    95                                      ; SAR positive number
+    96 00000124 48BE-                       mov     rsi, msg4
+    96 00000126 [7500000000000000] 
+    97 0000012E E853000000                  call    printmsg
+    98                                      
+    99 00000133 488B3425[AA000000]          mov     rsi, [number1]
+   100 0000013B E85B000000                  call    printnbr
+   101                                      
+   102 00000140 488B0425[AA000000]          mov     rax, [number1]
+   103 00000148 48C1F802                    sar     rax, 2          ; divide by 4 (arithmetic)
+   104 0000014C 4889C6                      mov     rsi, rax
+   105 0000014F E85C000000                  call    printres
+   106                                      
+   107                                      ; SAR negative number
+   108 00000154 48BE-                       mov     rsi, msg4
+   108 00000156 [7500000000000000] 
+   109 0000015E E823000000                  call    printmsg
+   110                                      
+   111 00000163 488B3425[B2000000]          mov     rsi, [number2]
+   112 0000016B E82B000000                  call    printnbr
+   113                                      
+   114 00000170 488B0425[B2000000]          mov     rax, [number2]
+   115 00000178 48C1F802                    sar     rax, 2          ; divide by 4 (arithmetic)
+   116 0000017C 4889C6                      mov     rsi, rax
+   117 0000017F E82C000000                  call    printres
+   118                                      
+   119 00000184 C9                          leave
+   120 00000185 C3                          ret
+   121                                      
+   122                                  printmsg:
+   123                                  section .data
+   124 000000C2 0A25730A00                  .fmtstr db  10,"%s",10,0
+   125                                  section .text
+   126 00000186 48BF-                       mov     rdi, .fmtstr
+   126 00000188 [C200000000000000] 
+   127 00000190 B800000000                  mov     rax, 0
+   128 00000195 E8(00000000)                call    printf
+   129                                      
+   130 0000019A C3                          ret
+   131                                  
+   132                                  printnbr:
+   133                                  section .data
+   134 000000C7 546865206F72696769-         .fmtstr db  "The original number is %lld",10,0
+   134 000000D0 6E616C206E756D6265-
+   134 000000D9 7220697320256C6C64-
+   134 000000E2 0A00               
+   135                                  section .text
+   136 0000019B 48BF-                       mov     rdi, .fmtstr
+   136 0000019D [C700000000000000] 
+   137 000001A5 B800000000                  mov     rax, 0
+   138 000001AA E8(00000000)                call    printf
+   139                                      
+   140 000001AF C3                          ret
+   141                                  
+   142                                  printres:
+   143                                  section .data
+   144 000000E4 54686520726573756C-         .fmtstr db  "The resulting number is %lld",10,0
+   144 000000ED 74696E67206E756D62-
+   144 000000F6 657220697320256C6C-
+   144 000000FF 640A00             
+   145                                  section .text
+   146 000001B0 48BF-                       mov     rdi, .fmtstr
+   146 000001B2 [E400000000000000] 
+   147 000001BA B800000000                  mov     rax, 0
+   148 000001BF E8(00000000)                call    printf
+   149                                      
+   150 000001C4 C3                          ret
+   151                                      

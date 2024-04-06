@@ -1,0 +1,27 @@
+     1                                  ; rect.asm
+     2                                  section .data
+     3                                  section .bss
+     4                                  section .text
+     5                                  
+     6                                  global r_area
+     7                                  r_area:
+     8                                      section .text
+     9 00000000 55                          push    rbp
+    10 00000001 4889E5                      mov     rbp, rsp
+    11 00000004 4889F0                      mov     rax, rsi
+    12 00000007 480FAFC7                    imul    rax, rdi
+    13 0000000B 4889EC                      mov     rsp, rbp
+    14 0000000E 5D                          pop     rbp
+    15 0000000F C3                          ret
+    16                                  
+    17                                  global r_perimeter
+    18                                  r_perimeter:
+    19                                      section .text
+    20 00000010 55                          push    rbp
+    21 00000011 4889E5                      mov     rbp, rsp
+    22 00000014 4889F0                      mov     rax, rsi
+    23 00000017 4801F8                      add     rax, rdi
+    24 0000001A 4801C0                      add     rax, rax
+    25 0000001D 4889EC                      mov     rsp, rbp
+    26 00000020 5D                          pop     rbp
+    27 00000021 C3                          ret
