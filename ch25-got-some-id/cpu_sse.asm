@@ -1,4 +1,4 @@
-; cpu.asm
+; cpu_sse.asm
 extern printf
 section .data
     fmt_no_sse  db      "This cpu doesn't support SSE",10,0
