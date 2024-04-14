@@ -1,0 +1,207 @@
+     1                                  ; strings.asm
+     2                                  extern printf
+     3                                  section .data
+     4 00000000 546869732069732074-         string1     db      "This is the 1st string.",10,0
+     4 00000009 686520317374207374-
+     4 00000012 72696E672E0A00     
+     5 00000019 546869732069732074-         string2     db      "This is the 2nd string.",10,0
+     5 00000022 686520326E64207374-
+     5 0000002B 72696E672E0A00     
+     6                                      strlen2     equ     $-string2-2
+     7 00000032 436F6D706172696E67-         string21    db      "Comparing strings: the strings do not differ.",10,0
+     7 0000003B 20737472696E67733A-
+     7 00000044 207468652073747269-
+     7 0000004D 6E677320646F206E6F-
+     7 00000056 74206469666665722E-
+     7 0000005F 0A00               
+     8 00000061 436F6D706172696E67-         string22    db      "Comparing strings: the strings differ, "
+     8 0000006A 20737472696E67733A-
+     8 00000073 207468652073747269-
+     8 0000007C 6E6773206469666665-
+     8 00000085 722C20             
+     9 00000088 7374617274696E6720-                     db      "starting at position: %d.",10,0
+     9 00000091 617420706F73697469-
+     9 0000009A 6F6E3A2025642E0A00 
+    10 000000A3 54686520717569636B-         string3     db      "The quick fox jumps over the lazy dog.",0
+    10 000000AC 20666F78206A756D70-
+    10 000000B5 73206F766572207468-
+    10 000000BE 65206C617A7920646F-
+    10 000000C7 672E00             
+    11                                      strlen3     equ     $-string3-2
+    12 000000CA 4E6F77206C6F6F6B20-         string33    db      "Now look at this string: %s",10,0
+    12 000000D3 617420746869732073-
+    12 000000DC 7472696E673A202573-
+    12 000000E5 0A00               
+    13 000000E7 7A00                        string4     db      "z",0
+    14 000000E9 546865206368617261-         string44    db      "The character '%s' was found at position: %d.",10,0
+    14 000000F2 637465722027257327-
+    14 000000FB 2077617320666F756E-
+    14 00000104 6420617420706F7369-
+    14 0000010D 74696F6E3A2025642E-
+    14 00000116 0A00               
+    15 00000118 546865206368617261-         string45    db      "The character '%s' was not found.",10,0
+    15 00000121 637465722027257327-
+    15 0000012A 20776173206E6F7420-
+    15 00000133 666F756E642E0A00   
+    16 0000013B 5363616E6E696E6720-         string46    db      "Scanning for the character '%s'.",10,0
+    16 00000144 666F72207468652063-
+    16 0000014D 686172616374657220-
+    16 00000156 272573272E0A00     
+    17                                  section .bss
+    18                                  section .text
+    19                                      global main
+    20                                  main:
+    21 00000000 55                          push    rbp
+    22 00000001 4889E5                      mov     rbp, rsp
+    23                                      
+    24                                      ; print the 2 strings
+    25 00000004 4831C0                      xor     rax, rax
+    26 00000007 48BF-                       mov     rdi, string1
+    26 00000009 [0000000000000000] 
+    27 00000011 E8(00000000)                call    printf
+    28 00000016 48BF-                       mov     rdi, string2
+    28 00000018 [1900000000000000] 
+    29 00000020 E8(00000000)                call    printf
+    30                                      
+    31                                      ; compare 2 strings
+    32 00000025 488D3C25[00000000]          lea     rdi, [string1]
+    33 0000002D 488D3425[19000000]          lea     rsi, [string2]
+    34 00000035 BA17000000                  mov     rdx, strlen2
+    35 0000003A E809010000                  call    compare1
+    36 0000003F 4883F800                    cmp     rax, 0
+    37 00000043 7511                        jnz     not_equal1
+    38                                      
+    39                                      ; strings are equal, print
+    40 00000045 48BF-                       mov     rdi, string21
+    40 00000047 [3200000000000000] 
+    41 0000004F E8(00000000)                call    printf
+    42 00000054 EB15                        jmp     otherversion
+    43                                      
+    44                                      
+    45                                  not_equal1: ; strings aren't equal, print
+    46 00000056 48BF-                       mov     rdi, string22
+    46 00000058 [6100000000000000] 
+    47 00000060 4889C6                      mov     rsi, rax
+    48 00000063 4831C0                      xor     rax, rax
+    49 00000066 E8(00000000)                call    printf
+    50                                      
+    51                                  otherversion:   ; compare 2 strings, other version
+    52 0000006B 488D3C25[00000000]          lea     rdi, [string1]
+    53 00000073 488D3425[19000000]          lea     rsi, [string2]
+    54 0000007B BA17000000                  mov     rdx, strlen2
+    55 00000080 E8E0000000                  call    compare2
+    56 00000085 4883F800                    cmp     rax, 0
+    57 00000089 7511                        jnz     not_equal2
+    58                                      
+    59                                      ; strings are equal, print
+    60 0000008B 48BF-                       mov     rdi, string21
+    60 0000008D [3200000000000000] 
+    61 00000095 E8(00000000)                call    printf
+    62 0000009A EB4D                        jmp     scanning
+    63                                      
+    64                                  not_equal2:     ; strings are not equal, print
+    65 0000009C 48BF-                       mov     rdi, string22
+    65 0000009E [6100000000000000] 
+    66 000000A6 4889C6                      mov     rsi, rax
+    67 000000A9 4831C0                      xor     rax, rax
+    68 000000AC E8(00000000)                call    printf
+    69                                      
+    70                                      ; scan for a character in a string
+    71                                      ; first print the string
+    72 000000B1 48BF-                       mov     rdi, string33
+    72 000000B3 [CA00000000000000] 
+    73 000000BB 48BE-                       mov     rsi, string3
+    73 000000BD [A300000000000000] 
+    74 000000C5 4831C0                      xor     rax, rax
+    75 000000C8 E8(00000000)                call    printf
+    76                                      
+    77                                      ; print string arg, can only be 1 char
+    78 000000CD 48BF-                       mov     rdi, string46
+    78 000000CF [3B01000000000000] 
+    79 000000D7 48BE-                       mov     rsi, string4
+    79 000000D9 [E700000000000000] 
+    80 000000E1 4831C0                      xor     rax, rax
+    81 000000E4 E8(00000000)                call    printf
+    82                                      
+    83                                  scanning:
+    84 000000E9 488D3C25[A3000000]          lea     rdi, [string3]      ; string
+    85 000000F1 488D3425[E7000000]          lea     rsi, [string4]      ; search arg
+    86 000000F9 BA25000000                  mov     rdx, strlen3
+    87 000000FE E876000000                  call    cscan
+    88 00000103 4883F800                    cmp     rax, 0
+    89 00000107 7421                        jz      char_not_found
+    90                                      
+    91                                      ; char found, print
+    92 00000109 48BF-                       mov     rdi, string44
+    92 0000010B [E900000000000000] 
+    93 00000113 48BE-                       mov     rsi, string4
+    93 00000115 [E700000000000000] 
+    94 0000011D 4889C2                      mov     rdx, rax
+    95 00000120 4831C0                      xor     rax, rax
+    96 00000123 E8(00000000)                call    printf
+    97 00000128 EB1C                        jmp     exit
+    98                                      
+    99                                  char_not_found: ; char not found, print
+   100 0000012A 48BF-                       mov     rdi, string45
+   100 0000012C [1801000000000000] 
+   101 00000134 48BE-                       mov     rsi, string4
+   101 00000136 [E700000000000000] 
+   102 0000013E 4831C0                      xor     rax, rax
+   103 00000141 E8(00000000)                call    printf
+   104                                      
+   105                                  exit:
+   106 00000146 C9                          leave
+   107 00000147 C3                          ret
+   108                                      
+   109                                  ;===============================================================================
+   110                                  ;==================================FUNCTIONS====================================
+   111                                  ;===============================================================================
+   112                                  ; function that compares 2 strings
+   113                                  compare1:
+   114 00000148 4889D1                      mov     rcx, rdx
+   115 0000014B FC                          cld
+   116                                  
+   117                                  cmpr:
+   118 0000014C A6                          cmpsb
+   119 0000014D 7506                        jne     notequal
+   120 0000014F E2FB                        loop    cmpr
+   121 00000151 4831C0                      xor     rax, rax
+   122 00000154 C3                          ret
+   123                                      
+   124                                  notequal:
+   125 00000155 B817000000                  mov     rax, strlen2
+   126 0000015A 48FFC9                      dec     rcx             ; compute position
+   127 0000015D 4829C8                      sub     rax, rcx        ; compute position
+   128 00000160 C3                          ret
+   129 00000161 4831C0                      xor     rax, rax
+   130 00000164 C3                          ret
+   131                                   
+   132                                  ;===============================================================================       
+   133                                  ; function 2 that compares 2 strings
+   134                                  compare2:
+   135 00000165 4889D1                      mov     rcx, rdx
+   136 00000168 FC                          cld
+   137 00000169 F3A6                        repe    cmpsb
+   138 0000016B 7409                        je      equal2
+   139 0000016D B817000000                  mov     rax, strlen2
+   140 00000172 4829C8                      sub     rax, rcx        ; compute position
+   141 00000175 C3                          ret
+   142                                      
+   143                                  equal2:
+   144 00000176 4831C0                      xor     rax, rax
+   145                                      
+   146                                  ;===============================================================================
+   147                                  ; function that scans a string for a char
+   148                                  cscan:
+   149 00000179 4889D1                      mov     rcx, rdx
+   150 0000017C AC                          lodsb
+   151 0000017D FC                          cld
+   152 0000017E F2AE                        repne   scasb
+   153 00000180 7509                        jne     char_not_found2
+   154 00000182 B825000000                  mov     rax, strlen3
+   155 00000187 4829C8                      sub     rax, rcx        ; compute position
+   156 0000018A C3                          ret
+   157                                      
+   158                                  char_not_found2:
+   159 0000018B 4831C0                      xor     rax, rax
+   160 0000018E C3                          ret

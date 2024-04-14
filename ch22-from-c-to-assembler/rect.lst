@@ -1,0 +1,29 @@
+     1                                  ; rect.asm
+     2                                  section .data
+     3                                  section .bss
+     4                                  section .text
+     5                                  
+     6                                  global rarea
+     7                                  rarea:
+     8                                      section .text
+     9 00000000 55                              push    rbp
+    10 00000001 4889E5                          mov     rbp, rsp
+    11                                          
+    12 00000004 4889F8                          mov     rax, rdi
+    13 00000007 48F7EE                          imul    rsi         ; multiplies the value in rsi with the value in rax
+    14                                          
+    15 0000000A C9                              leave
+    16 0000000B C3                              ret
+    17                                      
+    18                                  global rperim
+    19                                  rperim:
+    20                                      section .text
+    21 0000000C 55                              push    rbp
+    22 0000000D 4889E5                          mov     rbp, rsp
+    23                                          
+    24 00000010 4889F8                          mov     rax, rdi
+    25 00000013 4801F0                          add     rax, rsi
+    26 00000016 486BC002                        imul    rax, 2
+    27                                          
+    28 0000001A C9                              leave
+    29 0000001B C3                              ret

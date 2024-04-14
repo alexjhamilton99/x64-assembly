@@ -1,0 +1,144 @@
+     1                                  ; sse_aligned.asm
+     2                                  extern printf
+     3                                  section .data
+     4 00000000 0D                      	dummy		db	13	; dummy variable that purposefully misaligns the memory
+     5 00000001 90<rep Fh>              align 16	; NASM assembler directive that aligns memory
+     6 00000010 CDCC8C3F                	spvector1	dd	1.1
+     7 00000014 CDCC0C40                			dd	2.2
+     8 00000018 33335340                			dd	3.3
+     9 0000001C CDCC8C40                			dd	4.4
+    10 00000020 CDCC8C3F                	spvector2	dd	1.1
+    11 00000024 CDCC0C40                			dd	2.2
+    12 00000028 33335340                			dd	3.3
+    13 0000002C CDCC8C40                			dd	4.4
+    14                                  	
+    15 00000030 9A9999999999F13F        	dpvector1	dq	1.1
+    16 00000038 9A99999999990140        			dq	2.2
+    17 00000040 6666666666660A40        	dpvector2	dq	3.3
+    18 00000048 9A99999999991140        			dq	4.4
+    19                                  
+    20 00000050 53696E676C65205072-     	fmt1		db	"Single Precision Vector 1: %f, %f, %f, %f",10,0
+    20 00000059 65636973696F6E2056-
+    20 00000062 6563746F7220313A20-
+    20 0000006B 25662C2025662C2025-
+    20 00000074 662C2025660A00     
+    21 0000007B 53696E676C65205072-     	fmt2		db	"Single Precision Vector 2: %f, %f, %f, %f",10,0
+    21 00000084 65636973696F6E2056-
+    21 0000008D 6563746F7220323A20-
+    21 00000096 25662C2025662C2025-
+    21 0000009F 662C2025660A00     
+    22 000000A6 53756D206F66205369-     	fmt3		db	"Sum of Single Precision Vector 1 and Vector 2: %f, %f, %f, %f",10,0
+    22 000000AF 6E676C652050726563-
+    22 000000B8 6973696F6E20566563-
+    22 000000C1 746F72203120616E64-
+    22 000000CA 20566563746F722032-
+    22 000000D3 3A2025662C2025662C-
+    22 000000DC 2025662C2025660A00 
+    23 000000E5 446F75626C65205072-     	fmt4		db	"Double Precision Vector 1: %f, %f",10,0
+    23 000000EE 65636973696F6E2056-
+    23 000000F7 6563746F7220313A20-
+    23 00000100 25662C2025660A00   
+    24 00000108 446F75626C65205072-     	fmt5		db	"Double Precision Vector 2: %f, %f",10,0
+    24 00000111 65636973696F6E2056-
+    24 0000011A 6563746F7220323A20-
+    24 00000123 25662C2025660A00   
+    25 0000012B 53756D206F6620446F-     	fmt6		db	"Sum of Double Precision Vector 1 and Vector 2: %f, %f",10,0
+    25 00000134 75626C652050726563-
+    25 0000013D 6973696F6E20566563-
+    25 00000146 746F72203120616E64-
+    25 0000014F 20566563746F722032-
+    25 00000158 3A2025662C2025660A-
+    25 00000161 00                 
+    26                                  section .bss
+    27                                  alignb 16
+    28 00000000 <res 10h>               	spvector_res	resd	4
+    29 00000010 <res 20h>               	dpvector_res	resq	4
+    30                                  section .text
+    31                                  	global main
+    32                                  main:
+    33 00000000 55                      	push	rbp
+    34 00000001 4889E5                  	mov	rbp, rsp
+    35                                  
+    36                                  	; add 2 single precision fl-pt vectors
+    37 00000004 48BE-                   	mov	rsi, spvector1
+    37 00000006 [1000000000000000] 
+    38 0000000E 48BF-                   	mov	rdi, fmt1
+    38 00000010 [5000000000000000] 
+    39 00000018 E8B5000000              	call	printspfp
+    40                                  
+    41 0000001D 48BE-                   	mov	rsi, spvector2
+    41 0000001F [2000000000000000] 
+    42 00000027 48BF-                   	mov	rdi, fmt2
+    42 00000029 [7B00000000000000] 
+    43 00000031 E89C000000              	call	printspfp
+    44                                  
+    45 00000036 0F280425[10000000]      	movaps	xmm0, [spvector1]
+    46 0000003E 0F580425[20000000]      	addps	xmm0, [spvector2]
+    47                                  
+    48 00000046 0F290425[00000000]      	movaps	[spvector_res], xmm0
+    49 0000004E 48BE-                   	mov	rsi, spvector_res
+    49 00000050 [0000000000000000] 
+    50 00000058 48BF-                   	mov	rdi, fmt3
+    50 0000005A [A600000000000000] 
+    51 00000062 E86B000000              	call	printspfp
+    52                                  
+    53                                  	; add 2 double precision fl-pt vectors
+    54 00000067 48BE-                   	mov	rsi, dpvector1
+    54 00000069 [3000000000000000] 
+    55 00000071 48BF-                   	mov	rdi, fmt4
+    55 00000073 [E500000000000000] 
+    56 0000007B E885000000              	call	printdpfp
+    57                                  
+    58 00000080 48BE-                   	mov	rsi, dpvector2
+    58 00000082 [4000000000000000] 
+    59 0000008A 48BF-                   	mov	rdi, fmt5
+    59 0000008C [0801000000000000] 
+    60 00000094 E86C000000              	call	printdpfp
+    61                                  
+    62 00000099 660F280425-             	movapd	xmm0, [dpvector1]
+    62 0000009E [30000000]         
+    63 000000A2 660F580425-             	addpd	xmm0, [dpvector2]
+    63 000000A7 [40000000]         
+    64                                  
+    65 000000AB 660F290425-             	movapd	[dpvector_res], xmm0
+    65 000000B0 [10000000]         
+    66                                  	
+    67 000000B4 48BE-                   	mov	rsi, dpvector_res
+    67 000000B6 [1000000000000000] 
+    68 000000BE 48BF-                   	mov	rdi, fmt6
+    68 000000C0 [2B01000000000000] 
+    69 000000C8 E838000000              	call	printdpfp
+    70                                  
+    71 000000CD 4889EC                  	mov	rsp, rbp
+    72 000000D0 5D                      	pop	rbp
+    73 000000D1 C3                      	ret
+    74                                  
+    75                                  printspfp:
+    76 000000D2 55                      	push	rbp
+    77 000000D3 4889E5                  	mov	rbp, rsp
+    78                                  
+    79 000000D6 F30F1006                	movss		xmm0, [rsi]
+    80 000000DA F30F5AC0                	cvtss2sd	xmm0, xmm0	; printf expects a double-precision arg
+    81 000000DE F30F104E04              	movss		xmm1, [rsi+4]
+    82 000000E3 F30F5AC9                	cvtss2sd	xmm1, xmm1
+    83 000000E7 F30F105608              	movss		xmm2, [rsi+8]
+    84 000000EC F30F5AD2                	cvtss2sd	xmm2, xmm2
+    85 000000F0 F30F105E0C              	movss		xmm3, [rsi+12]
+    86 000000F5 F30F5ADB                	cvtss2sd	xmm3, xmm3
+    87 000000F9 B804000000              	mov		rax, 4
+    88 000000FE E8(00000000)            	call		printf
+    89                                  
+    90 00000103 C9                      	leave
+    91 00000104 C3                      	ret
+    92                                  
+    93                                  printdpfp:
+    94 00000105 55                      	push	rbp
+    95 00000106 4889E5                  	mov	rbp, rsp
+    96                                  
+    97 00000109 F20F1006                	movsd	xmm0, [rsi]
+    98 0000010D F20F104E08              	movsd	xmm1, [rsi+8]
+    99 00000112 B802000000              	mov	rax, 2
+   100 00000117 E8(00000000)            	call	printf
+   101                                  
+   102 0000011C C9                      	leave
+   103 0000011D C3                      	ret

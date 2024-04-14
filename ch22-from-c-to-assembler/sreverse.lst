@@ -1,0 +1,36 @@
+     1                                  ; sreverse.asm
+     2                                  section .data
+     3                                  section .bss
+     4                                  section .text
+     5                                  
+     6                                  global sreverse
+     7                                  sreverse:
+     8 00000000 55                          push    rbp
+     9 00000001 4889E5                      mov     rbp, rsp
+    10                                      
+    11                                  pushing:
+    12 00000004 4889F1                      mov     rcx, rsi
+    13 00000007 4889FB                      mov     rbx, rdi
+    14 0000000A 41BC00000000                mov     r12, 0
+    15                                      
+    16                                      pushloop:
+    17 00000010 4A8B0423                        mov     rax, qword [rbx+r12]
+    18 00000014 50                              push    rax
+    19 00000015 49FFC4                          inc     r12
+    20 00000018 E2F6                            loop    pushloop
+    21                                          
+    22                                  popping:
+    23 0000001A 4889F1                      mov     rcx, rsi
+    24 0000001D 4889FB                      mov     rbx, rdi
+    25 00000020 41BC00000000                mov     r12, 0
+    26                                          
+    27                                      poploop:
+    28 00000026 58                              pop     rax
+    29 00000027 42880423                        mov     byte [rbx+r12], al
+    30 0000002B 49FFC4                          inc     r12
+    31 0000002E E2F6                            loop    poploop
+    32                                          
+    33 00000030 4889F8                      mov     rax, rdi
+    34                                      
+    35 00000033 C9                          leave
+    36 00000034 C3                          ret    

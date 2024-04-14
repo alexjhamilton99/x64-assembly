@@ -1,0 +1,127 @@
+     1                                  ; cpu.asm
+     2                                  extern printf
+     3                                  section .data
+     4 00000000 546869732063707520-         fmt_no_sse  db      "This cpu doesn't support SSE",10,0
+     4 00000009 646F65736E27742073-
+     4 00000012 7570706F7274205353-
+     4 0000001B 450A00             
+     5 0000001E 546869732063707520-         fmt_sse42   db      "This cpu supports SSE 4.2",10,0
+     5 00000027 737570706F72747320-
+     5 00000030 53534520342E320A00 
+     6 00000039 546869732063707520-         fmt_sse41   db      "This cpu supports SSE 4.1",10,0
+     6 00000042 737570706F72747320-
+     6 0000004B 53534520342E310A00 
+     7 00000054 546869732063707520-         fmt_ssse3   db      "This cpu supports SSSE 3",10,0
+     7 0000005D 737570706F72747320-
+     7 00000066 5353534520330A00   
+     8 0000006E 546869732063707520-         fmt_sse3    db      "This cpu supports SSE 3",10,0
+     8 00000077 737570706F72747320-
+     8 00000080 53534520330A00     
+     9 00000087 546869732063707520-         fmt_sse2    db      "This cpu supports SSE 2",10,0
+     9 00000090 737570706F72747320-
+     9 00000099 53534520320A00     
+    10 000000A0 546869732063707520-         fmt_sse     db      "This cpu supports SSE",10,0
+    10 000000A9 737570706F72747320-
+    10 000000B2 5353450A00         
+    11                                  section .bss
+    12                                  section .text
+    13                                      global main
+    14                                  main:
+    15 00000000 55                          push    rbp
+    16 00000001 4889E5                      mov     rbp, rsp
+    17 00000004 E802000000                  call    cpu_sse         ; returns 1 in rax if there's SSE support; otherwise 0
+    18 00000009 C9                          leave
+    19 0000000A C3                          ret
+    20                                      
+    21                                  cpu_sse:
+    22 0000000B 55                          push    rbp
+    23 0000000C 4889E5                      mov     rbp, rsp
+    24 0000000F 4D31E4                      xor     r12, r12        ; flag SSE available
+    25 00000012 B801000000                  mov     eax, 1          ; request CPU feature flags
+    26 00000017 0FA2                        cpuid                   
+    27                                      
+    28                                      ; test for SSE
+    29 00000019 F7C200000002                test    edx, 2000000h   ; test bit 25 (SSE)
+    30 0000001F 741C                        jz      sse2            ; SSE available
+    31 00000021 41BC01000000                mov     r12, 1
+    32 00000027 4831C0                      xor     rax, rax
+    33 0000002A 48BF-                       mov     rdi, fmt_sse
+    33 0000002C [A000000000000000] 
+    34 00000034 51                          push    rcx             ; modified by printf
+    35 00000035 52                          push    rdx             ; preserve result of cpuid
+    36 00000036 E8(00000000)                call    printf
+    37 0000003B 5A                          pop     rdx
+    38 0000003C 59                          pop     rcx
+    39                                       
+    40                                  sse2:
+    41 0000003D F7C200000004                test    edx, 4000000h   ; test bit 26 (SSE 2)
+    42 00000043 741C                        jz      sse3            ; SSE 2 available
+    43 00000045 41BC01000000                mov     r12, 1
+    44 0000004B 4831C0                      xor     rax, rax
+    45 0000004E 48BF-                       mov     rdi, fmt_sse2
+    45 00000050 [8700000000000000] 
+    46 00000058 51                          push    rcx             ; modified by printf
+    47 00000059 52                          push    rdx             ; preserve result of cpuid
+    48 0000005A E8(00000000)                call    printf
+    49 0000005F 5A                          pop     rdx
+    50 00000060 59                          pop     rcx
+    51                                      
+    52                                  sse3:
+    53 00000061 F7C101000000                test    ecx, 1          ; test bit 0 (SSE 3)
+    54 00000067 741A                        jz      ssse3           ; SSE available
+    55 00000069 41BC01000000                mov     r12, 1
+    56 0000006F 4831C0                      xor     rax, rax
+    57 00000072 48BF-                       mov     rdi, fmt_sse3
+    57 00000074 [6E00000000000000] 
+    58 0000007C 51                          push    rcx             ; modified by printf
+    59 0000007D E8(00000000)                call    printf
+    60 00000082 59                          pop     rcx
+    61                                      
+    62                                  ssse3:
+    63 00000083 F7C109000000                test    ecx, 9h         ; test bit 0 (SSE 3)
+    64 00000089 741A                        jz      sse41           ; SSE 3 available
+    65 0000008B 41BC01000000                mov     r12, 1
+    66 00000091 4831C0                      xor     rax, rax
+    67 00000094 48BF-                       mov     rdi, fmt_ssse3
+    67 00000096 [5400000000000000] 
+    68 0000009E 51                          push    rcx             ; modified by printf
+    69 0000009F E8(00000000)                call    printf
+    70 000000A4 59                          pop     rcx
+    71                                      
+    72                                  sse41:
+    73 000000A5 F7C100000800                test    ecx, 80000h     ; test bit 19 (SSE 4.1)
+    74 000000AB 741A                        jz      sse42           ; SSE 4.1 available
+    75 000000AD 41BC01000000                mov     r12, 1
+    76 000000B3 4831C0                      xor     rax, rax
+    77 000000B6 48BF-                       mov     rdi, fmt_sse41
+    77 000000B8 [3900000000000000] 
+    78 000000C0 51                          push    rcx             ; modified by printf
+    79 000000C1 E8(00000000)                call    printf
+    80 000000C6 59                          pop     rcx
+    81                                      
+    82                                  sse42:
+    83 000000C7 F7C100001000                test    ecx, 100000h    ; test bit 20 (SSE 4.2)
+    84 000000CD 741A                        jz      wrapup          ; SSE 4.2 available
+    85 000000CF 41BC01000000                mov     r12, 1
+    86 000000D5 4831C0                      xor     rax, rax
+    87 000000D8 48BF-                       mov     rdi, fmt_sse42
+    87 000000DA [1E00000000000000] 
+    88 000000E2 51                          push    rcx             ; modified by printf
+    89 000000E3 E8(00000000)                call    printf
+    90 000000E8 59                          pop     rcx
+    91                                      
+    92                                  wrapup:
+    93 000000E9 4983FC01                    cmp     r12, 1
+    94 000000ED 7414                        je      sse_ok
+    95 000000EF 48BF-                       mov     rdi, fmt_no_sse
+    95 000000F1 [0000000000000000] 
+    96 000000F9 4831C0                      xor     rax, rax
+    97 000000FC E8(00000000)                call    printf          ; displays message if SSE not available
+    98 00000101 EB03                        jmp     the_exit
+    99                                      
+   100                                  sse_ok:
+   101 00000103 4C89E0                      mov     rax, r12        ; returns 1, SSE supported
+   102                                      
+   103                                  the_exit:
+   104 00000106 C9                          leave
+   105 00000107 C3                          ret
