@@ -1,0 +1,125 @@
+     1                                  ; sse_integer.asm
+     2                                  extern printf
+     3                                  
+     4                                  section .data
+     5 00000000 0D                      	dummy	db	13
+     6 00000001 90<rep Fh>              align 16
+     7 00000010 01000000                	pdivector1	dd	1
+     8 00000014 02000000                			dd	2
+     9 00000018 03000000                			dd	3
+    10 0000001C 04000000                			dd	4
+    11 00000020 05000000                	pdivector2	dd	5
+    12 00000024 06000000                			dd	6
+    13 00000028 07000000                			dd	7
+    14 0000002C 08000000                			dd	8
+    15                                  	
+    16 00000030 5061636B656420496E-     	fmt1	db	"Packed Integer Vector 1: %d, %d, %d, %d",10,0
+    16 00000039 746567657220566563-
+    16 00000042 746F7220313A202564-
+    16 0000004B 2C2025642C2025642C-
+    16 00000054 2025640A00         
+    17 00000059 5061636B656420496E-     	fmt2	db	"Packed Integer Vector 2: %d, %d, %d, %d",10,0
+    17 00000062 746567657220566563-
+    17 0000006B 746F7220323A202564-
+    17 00000074 2C2025642C2025642C-
+    17 0000007D 2025640A00         
+    18 00000082 53756D206F66205061-     	fmt3	db	"Sum of Packed Integer Vector 1 and Vector 2: %d, %d, %d, %d",10,0
+    18 0000008B 636B656420496E7465-
+    18 00000094 67657220566563746F-
+    18 0000009D 72203120616E642056-
+    18 000000A6 6563746F7220323A20-
+    18 000000AF 25642C2025642C2025-
+    18 000000B8 642C2025640A00     
+    19 000000BF 52657665727365206F-     	fmt4	db	"Reverse of Sum Vector: %d, %d, %d, %d",10,0
+    19 000000C8 662053756D20566563-
+    19 000000D1 746F723A2025642C20-
+    19 000000DA 25642C2025642C2025-
+    19 000000E3 640A00             
+    20                                  
+    21                                  section .bss
+    22                                  alignb 16
+    23 00000000 <res 10h>               	pdivector_res	resd	4
+    24 00000010 <res 10h>               	pdivector_other	resd	4
+    25                                  
+    26                                  section .text
+    27                                  	global main
+    28                                  main:
+    29 00000000 55                      	push	rbp
+    30 00000001 4889E5                  	mov	rbp, rsp
+    31                                  
+    32                                  	; print vector 1
+    33 00000004 48BE-                   	mov	rsi, pdivector1
+    33 00000006 [1000000000000000] 
+    34 0000000E 48BF-                   	mov	rdi, fmt1
+    34 00000010 [3000000000000000] 
+    35 00000018 E8AD000000              	call	printpdi
+    36                                  
+    37                                  	; print vector 2
+    38 0000001D 48BE-                   	mov	rsi, pdivector2
+    38 0000001F [2000000000000000] 
+    39 00000027 48BF-                   	mov	rdi, fmt2
+    39 00000029 [5900000000000000] 
+    40 00000031 E894000000              	call	printpdi
+    41                                  
+    42                                  	; add 2 aligned double int vectors
+    43 00000036 660F6F0425-             	movdqa	xmm0, [pdivector1]
+    43 0000003B [10000000]         
+    44 0000003F 660FFE0425-             	paddd	xmm0, [pdivector2]
+    44 00000044 [20000000]         
+    45                                  	
+    46                                  	; store result in memory
+    47 00000048 660F7F0425-             	movdqa	[pdivector_res], xmm0
+    47 0000004D [00000000]         
+    48                                  
+    49                                  	; print vector in memory
+    50 00000051 48BE-                   	mov	rsi, pdivector_res
+    50 00000053 [0000000000000000] 
+    51 0000005B 48BF-                   	mov	rdi, fmt3
+    51 0000005D [8200000000000000] 
+    52 00000065 E860000000              	call	printpdi
+    53                                  
+    54                                  	; copy the memory vector to xmm3
+    55 0000006A 660F6F1C25-             	movdqa	xmm3, [pdivector_res]
+    55 0000006F [00000000]         
+    56                                  
+    57                                  	; extract the packed values from xmm3
+    58 00000073 660F3A16D800            	pextrd	eax, xmm3, 0
+    59 00000079 660F3A16DB01            	pextrd	ebx, xmm3, 1
+    60 0000007F 660F3A16D902            	pextrd 	ecx, xmm3, 2
+    61 00000085 660F3A16DA03            	pextrd	edx, xmm3, 3
+    62                                  
+    63                                  	; insert into xmm0 in reverse order
+    64 0000008B 660F3A22C003            	pinsrd	xmm0, eax, 3
+    65 00000091 660F3A22C302            	pinsrd	xmm0, ebx, 2
+    66 00000097 660F3A22C101            	pinsrd	xmm0, ecx, 1
+    67 0000009D 660F3A22C200            	pinsrd	xmm0, edx, 0
+    68                                  
+    69                                  	; print the reversed vector
+    70 000000A3 660F7F0425-             	movdqa	[pdivector_other], xmm0
+    70 000000A8 [10000000]         
+    71 000000AC 48BE-                   	mov	rsi, pdivector_other
+    71 000000AE [1000000000000000] 
+    72 000000B6 48BF-                   	mov	rdi, fmt4
+    72 000000B8 [BF00000000000000] 
+    73 000000C0 E805000000              	call	printpdi
+    74                                  
+    75 000000C5 4889EC                  	mov	rsp, rbp
+    76 000000C8 5D                      	pop	rbp
+    77 000000C9 C3                      	ret
+    78                                  
+    79                                  printpdi:
+    80 000000CA 55                      	push	rbp
+    81 000000CB 4889E5                  	mov	rbp, rsp
+    82                                  
+    83 000000CE 660F6F06                	movdqa	xmm0, [rsi]
+    84                                  
+    85                                  	; extract the packed values from xmm0
+    86 000000D2 660F3A16C600            	pextrd	esi, xmm0, 0
+    87 000000D8 660F3A16C201            	pextrd	edx, xmm0, 1
+    88 000000DE 660F3A16C102            	pextrd	ecx, xmm0, 2
+    89 000000E4 66410F3A16C003          	pextrd	r8d, xmm0, 3
+    90 000000EB B800000000              	mov	rax, 0		; no floats to pass
+    91 000000F0 E8(00000000)            	call	printf
+    92                                  
+    93 000000F5 C9                      	leave
+    94 000000F6 C3                      	ret
