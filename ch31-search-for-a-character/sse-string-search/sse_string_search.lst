@@ -1,0 +1,157 @@
+     1                                  ; sse_string_search.asm
+     2                                  extern printf
+     3                                  
+     4                                  section .data
+     5 00000000 74686520717569636B-     	string1		db	"the quick brown fox jumps over the lazy river",0
+     5 00000009 2062726F776E20666F-
+     5 00000012 78206A756D7073206F-
+     5 0000001B 76657220746865206C-
+     5 00000024 617A79207269766572-
+     5 0000002D 00                 
+     6 0000002E 6500                    	string2		db	"e",0
+     7 00000030 54686973206973206F-     	fmt1		db	"This is our string: %s",10,0
+     7 00000039 757220737472696E67-
+     7 00000042 3A2025730A00       
+     8 00000048 546865206669727374-     	fmt2		db	"The first '%s' is at position %d.",10,0
+     8 00000051 202725732720697320-
+     8 0000005A 617420706F73697469-
+     8 00000063 6F6E2025642E0A00   
+     9 0000006B 546865206C61737420-     	fmt3		db	"The last '%s' is at position %d.",10,0
+     9 00000074 272573272069732061-
+     9 0000007D 7420706F736974696F-
+     9 00000086 6E2025642E0A00     
+    10 0000008D 546865206368617261-     	fmt4		db	"The character '%s' didn't show up!.",10,0
+    10 00000096 637465722027257327-
+    10 0000009F 206469646E27742073-
+    10 000000A8 686F77207570212E0A-
+    10 000000B1 00                 
+    11                                  
+    12                                  section .bss
+    13                                  section .text
+    14                                  	global main
+    15                                  main:
+    16 00000000 55                      	push	rbp
+    17 00000001 4889E5                  	mov	rbp, rsp
+    18                                  
+    19 00000004 48BF-                   	mov	rdi, fmt1
+    19 00000006 [3000000000000000] 
+    20 0000000E 48BE-                   	mov	rsi, string1
+    20 00000010 [0000000000000000] 
+    21 00000018 4831C0                  	xor	rax, rax
+    22 0000001B E8(00000000)            	call	printf
+    23                                  
+    24                                  	; find first occurrence
+    25 00000020 48BF-                   	mov	rdi, string1
+    25 00000022 [0000000000000000] 
+    26 0000002A 48BE-                   	mov	rsi, string2
+    26 0000002C [2E00000000000000] 
+    27 00000034 E87D000000              	call	pstrscan_f
+    28 00000039 4883F800                	cmp	rax, 0
+    29 0000003D 7459                    	je	no_show
+    30 0000003F 48BF-                   	mov	rdi, fmt2
+    30 00000041 [4800000000000000] 
+    31 00000049 48BE-                   	mov	rsi, string2
+    31 0000004B [2E00000000000000] 
+    32 00000053 4889C2                  	mov	rdx, rax
+    33 00000056 4831C0                  	xor	rax, rax
+    34 00000059 E8(00000000)            	call	printf
+    35                                  
+    36                                  	; find last occurrence
+    37 0000005E 48BF-                   	mov	rdi, string1
+    37 00000060 [0000000000000000] 
+    38 00000068 48BE-                   	mov	rsi, string2
+    38 0000006A [2E00000000000000] 
+    39 00000072 E86E000000              	call	pstrscan_l
+    40 00000077 48BF-                   	mov	rdi, fmt3
+    40 00000079 [6B00000000000000] 
+    41 00000081 48BE-                   	mov	rsi, string2
+    41 00000083 [2E00000000000000] 
+    42 0000008B 4889C2                  	mov	rdx, rax
+    43 0000008E 4831C0                  	xor	rax, rax
+    44 00000091 E8(00000000)            	call	printf
+    45 00000096 EB1C                    	jmp	exit
+    46                                  
+    47                                  	no_show:
+    48 00000098 48BF-                   		mov	rdi, fmt4
+    48 0000009A [8D00000000000000] 
+    49 000000A2 48BE-                   		mov	rsi, string2
+    49 000000A4 [2E00000000000000] 
+    50 000000AC 4831C0                  		xor	rax, rax
+    51 000000AF E8(00000000)            		call	printf
+    52                                  
+    53                                  	exit:
+    54 000000B4 C9                      		leave
+    55 000000B5 C3                      		ret
+    56                                  
+    57                                  ; ------- find first occurrence fn ------------
+    58                                  pstrscan_f:
+    59 000000B6 55                      	push	rbp
+    60 000000B7 4889E5                  	mov	rbp, rsp
+    61                                  
+    62 000000BA 4831C0                  	xor	rax, rax
+    63 000000BD 660FEFC0                	pxor	xmm0, xmm0
+    64 000000C1 660F3A200600            	pinsrb	xmm0, [rsi], 0
+    65                                  
+    66                                  	.block_loop:
+    67 000000C7 660F3A63040700          		pcmpistri	xmm0, [rdi + rax], 00000000b
+    68 000000CE 7208                    		jc		.found				; jc = jump if CF set
+    69 000000D0 740E                    		jz		.none
+    70 000000D2 4883C010                		add		rax, 16
+    71 000000D6 EBEF                    		jmp		.block_loop
+    72                                  
+    73                                  	.found:
+    74 000000D8 4801C8                  		add		rax, rcx			; rcx contins char's position
+    75 000000DB 48FFC0                  		inc		rax				; start counting from 1 instead of 0
+    76                                  
+    77 000000DE C9                      		leave
+    78 000000DF C3                      		ret
+    79                                  
+    80                                  	.none:
+    81 000000E0 4831C0                  		xor		rax, rax			; nothing found, return 0
+    82                                  
+    83 000000E3 C9                      		leave
+    84 000000E4 C3                      		ret
+    85                                  
+    86                                  ;---------- find last occurrence -----------
+    87                                  pstrscan_l:
+    88 000000E5 55                      	push	rbp
+    89 000000E6 4889E5                  	mov	rbp, rsp
+    90                                  
+    91 000000E9 53                      	push	rbx		; callee saved
+    92 000000EA 4154                    	push	r12		; callee saved
+    93                                  
+    94 000000EC 4831C0                  	xor	rax, rax
+    95 000000EF 660FEFC0                	pxor	xmm0, xmm0
+    96 000000F3 660F3A200600            	pinsrb	xmm0, [rsi], 0
+    97 000000F9 4D31E4                  	xor	r12, r12
+    98                                  
+    99                                  	.block_loop:
+   100 000000FC 660F3A63040740          		pcmpistri	xmm0, [rdi + rax], 01000000b
+   101 00000103 0F94C3                  		setz		bl
+   102 00000106 7208                    		jc		.found
+   103 00000108 741D                    		jz		.done
+   104 0000010A 4883C010                		add		rax, 16
+   105 0000010E EBEC                    		jmp		.block_loop
+   106                                  
+   107                                  	.found:
+   108 00000110 4989C4                  		mov		r12, rax
+   109 00000113 4901CC                  		add		r12, rcx	; rcx contains char's position
+   110 00000116 49FFC4                  		inc		r12
+   111 00000119 80FB01                  		cmp		bl, 1
+   112 0000011C 4883C010                		add		rax, 16
+   113 00000120 EBDA                    		jmp		.block_loop
+   114                                  
+   115 00000122 415C                    		pop		r12		; callee saved
+   116 00000124 5B                      		pop		rbx		; callee saved
+   117                                  
+   118 00000125 C9                      		leave
+   119 00000126 C3                      		ret
+   120                                  	
+   121                                  	.done:
+   122 00000127 4C89E0                  		mov		rax, r12
+   123                                  
+   124 0000012A 415C                    		pop		r12		; callee saved
+   125 0000012C 5B                      		pop		rbx		; callee saved
+   126                                  
+   127 0000012D C9                      		leave
+   128 0000012E C3                      		ret
