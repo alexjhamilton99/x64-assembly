@@ -1,0 +1,190 @@
+     1                                  ; sse_string4.asm
+     2                                  ; find a character
+     3                                  extern print16b
+     4                                  extern printf
+     5                                  
+     6                                  section .data
+     7 00000000 7164616364656B6B66-     	string1		db	"qdacdekkfijlmdozabecdfgdklkmddaffffffffdedeee",10,0
+     7 00000009 696A6C6D646F7A6162-
+     7 00000012 6563646667646B6C6B-
+     7 0000001B 6D6464616666666666-
+     7 00000024 666666646564656565-
+     7 0000002D 0A00               
+     8 0000002F 6500                    	string2		db	"e",0
+     9 00000031 6100                    	string3		db	"a",0
+    10 00000033 46696E6420616C6C20-     	fmt		db	"Find all the charaters '%s' and '%s' in:",10,0
+    10 0000003C 746865206368617261-
+    10 00000045 746572732027257327-
+    10 0000004E 20616E642027257327-
+    10 00000057 20696E3A0A00       
+    11 0000005D 4920666F756E642025-     	fmt_oc		db	"I found %ld characters '%s' and '%s'",10,0
+    11 00000066 6C6420636861726163-
+    11 0000006F 746572732027257327-
+    11 00000078 20616E642027257327-
+    11 00000081 0A00               
+    12 00000083 0A00                    	NL		db	10,0
+    13                                  
+    14                                  section .bss
+    15                                  section .text
+    16                                  	global main
+    17                                  main:
+    18 00000000 55                      	push	rbp
+    19 00000001 4889E5                  	mov	rbp, rsp
+    20                                  
+    21                                  	; print the search characters
+    22 00000004 48BF-                   	mov	rdi, fmt
+    22 00000006 [3300000000000000] 
+    23 0000000E 48BE-                   	mov	rsi, string2
+    23 00000010 [2F00000000000000] 
+    24 00000018 48BA-                   	mov	rdx, string3
+    24 0000001A [3100000000000000] 
+    25 00000022 4831C0                  	xor	rax, rax
+    26 00000025 E8(00000000)            	call	printf
+    27                                  	; print the target string
+    28 0000002A 48BF-                   	mov	rdi, string1
+    28 0000002C [0000000000000000] 
+    29 00000034 4831C0                  	xor	rax, rax
+    30 00000037 E8(00000000)            	call	printf
+    31                                  	; search the string and print mask
+    32 0000003C 48BF-                   	mov	rdi, string1
+    32 0000003E [0000000000000000] 
+    33 00000046 48BE-                   	mov	rsi, string2
+    33 00000048 [2F00000000000000] 
+    34 00000050 48BA-                   	mov	rdx, string3
+    34 00000052 [3100000000000000] 
+    35 0000005A E828000000              	call	pcharsrch
+    36                                  	; print number of string2 occurrences
+    37 0000005F 48BF-                   	mov	rdi, fmt_oc
+    37 00000061 [5D00000000000000] 
+    38 00000069 4889C6                  	mov	rsi, rax
+    39 0000006C 48BA-                   	mov	rdx, string2
+    39 0000006E [2F00000000000000] 
+    40 00000076 48B9-                   	mov	rcx, string3
+    40 00000078 [3100000000000000] 
+    41 00000080 E8(00000000)            	call	printf
+    42                                  
+    43 00000085 C9                      	leave
+    44 00000086 C3                      	ret
+    45                                  
+    46                                  ; searching and mask printing function
+    47                                  pcharsrch:	; packed character search
+    48 00000087 55                      	push	rbp
+    49 00000088 4889E5                  	mov	rbp, rsp
+    50 0000008B 4883EC10                	sub	rsp, 16		; provide stack space for pushing xmm1
+    51 0000008F 4D31E4                  	xor	r12, r12	; occurrence running total
+    52 00000092 4831C9                  	xor	rcx, rcx	; for signaling the end
+    53 00000095 4831DB                  	xor	rbx, rbx	; for address calculation
+    54 00000098 48C7C0F0FFFFFF          	mov	rax, -16	; for byte counting, avoid setting flag
+    55                                  
+    56                                  	; build xmm1, load search character
+    57 0000009F 660FEFC9                	pxor	xmm1, xmm1		; clear xmm1
+    58 000000A3 660F3A200E00            	pinsrb	xmm1, byte[rsi], 0	; first char is at index 0
+    59 000000A9 660F3A200A01            	pinsrb	xmm1, byte[rdx], 1	; second char is at index 0
+    60                                  
+    61                                  	.loop:
+    62 000000AF 4883C010                		add		rax, 16			; avoid setting ZF
+    63 000000B3 BE10000000              		mov		rsi, 16			; if no terminating 0, print 16 bytes
+    64 000000B8 F30F6F141F              		movdqu		xmm2, [rdi + rbx]	; load 16 bytes of string in xmm2
+    65 000000BD 660F3A62CA40            		pcmpistrm	xmm1, xmm2, 40h		; 'equal each' and 'byte mask in xmm0'
+    66 000000C3 0F94C1                  		setz		cl			; if terminating 0 detected
+    67                                  
+    68                                  		; if there's a terminating 0, determine its position
+    69 000000C6 80F900                  		cmp		cl, 0
+    70 000000C9 7410                    		je		.gotoprint		; no terminating 0 found
+    71                                  
+    72                                  		; terminating null found
+    73                                  		; less than 16 bytes left
+    74                                  		; rdi contains string's address
+    75                                  		; rbx contains number bytes in the blocks handled so far
+    76 000000CB 4801DF                  		add		rdi, rbx		; remaining string part's address
+    77 000000CE 51                      		push		rcx			; caller saved (cl in use)
+    78 000000CF E832000000              		call		pstrlen			; rax returns the length
+    79 000000D4 59                      		pop		rcx			; caller saved
+    80 000000D5 48FFC8                  		dec		rax			; length without 0
+    81 000000D8 4889C6                  		mov		rsi, rax		; remaining mask bytes' length
+    82                                  
+    83                                  		; print the mask
+    84                                  	.gotoprint:
+    85 000000DB E855000000              		call		print_mask
+    86                                  		; keep matches running total
+    87 000000E0 F3450FB8ED              		popcnt		r13d, r13d		; count number of 1 bits
+    88 000000E5 4501EC                  		add		r12d, r13d		; keep number of occurrences in r12d
+    89 000000E8 08C9                    		or		cl, cl			; terminating 0 detected?
+    90 000000EA 7506                    		jnz		.exit
+    91 000000EC 4883C310                		add		rbx, 16			; prepare for next 16 bytes
+    92 000000F0 EBBD                    		jmp		.loop
+    93                                  
+    94                                  	.exit:
+    95 000000F2 48BF-                   		mov		rdi, NL			; add a new line
+    95 000000F4 [8300000000000000] 
+    96 000000FC E8(00000000)            		call		printf
+    97 00000101 4C89E0                  		mov		rax, r12		; number of occurrences
+    98                                  
+    99 00000104 C9                      	leave
+   100 00000105 C3                      	ret
+   101                                  
+   102                                  ; find terminating 0 function
+   103                                  pstrlen:
+   104 00000106 55                      	push		rbp
+   105 00000107 4889E5                  	mov		rbp, rsp
+   106                                  
+   107 0000010A 4883EC10                	sub		rsp, 16		; for saving xmm0
+   108 0000010E F30F7F45F0              	movdqu		[rbp-16], xmm0	; push xmm0
+   109 00000113 48C7C0F0FFFFFF          	mov		rax, -16	; avoid later flag setting
+   110 0000011A 660FEFC0                	pxor		xmm0, xmm0	; search for 0, i.e. string's end
+   111                                  
+   112                                  	.loop:
+   113 0000011E 4883C010                		add		rax, 16				; avoid setting ZF
+   114 00000122 660F3A63040708          		pcmpistri	xmm0, [rdi + rax], 0x08		; equal each
+   115 00000129 75F3                    		jnz		.loop
+   116 0000012B 4801C8                  		add		rax, rcx			; rax = bytes already handled
+   117                                  								; terminating loop handles when rcx = bytes
+   118 0000012E F30F6F45F0              		movdqu		xmm0, [rbp - 16]		; pop xmm0
+   119                                  
+   120 00000133 C9                      	leave
+   121 00000134 C3                      	ret
+   122                                  
+   123                                  ; mask printing function
+   124                                  ; xmm0 contains the mask
+   125                                  ; rsi contains the number of bits to print (16 or less)
+   126                                  print_mask:
+   127 00000135 55                      	push		rbp
+   128 00000136 4889E5                  	mov		rbp, rsp
+   129                                  
+   130 00000139 4883EC10                	sub		rsp, 16			; for saving xmm0
+   131                                  
+   132 0000013D E81F000000              	call		reverse_xmm0		; little endian
+   133 00000142 66440FD7E8              	pmovmskb	r13d, xmm0		; mov byte mask to r13d
+   134 00000147 F30F7F4DF0              	movdqu		[rbp - 16], xmm1	; push xmm1 b/c of printf
+   135 0000014C 57                      	push		rdi			; rdi contains string1
+   136 0000014D 4489EF                  	mov		edi, r13d		; contains mask to print
+   137 00000150 52                      	push		rdx			; contains mask
+   138 00000151 51                      	push		rcx			; contains string flag's end
+   139 00000152 E8(00000000)            	call		print16b
+   140 00000157 59                      	pop		rcx
+   141 00000158 5A                      	pop		rdx
+   142 00000159 5F                      	pop		rdi
+   143 0000015A F30F6F4DF0              	movdqu		xmm1, [rbp - 16]	; pop xmm1
+   144                                  
+   145 0000015F C9                      	leave
+   146 00000160 C3                      	ret
+   147                                  
+   148                                  ; reversing and shuffling xmm0 function
+   149                                  reverse_xmm0:
+   150                                  section .data
+   151                                  	; reversing mask
+   152 00000085 0F0E0D0C0B0A090807-     	.bytereverse	db	15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
+   152 0000008E 06050403020100     
+   153                                  section .text
+   154 00000161 55                      	push		rbp
+   155 00000162 4889E5                  	mov		rbp, rsp
+   156                                  
+   157 00000165 4883EC10                	sub		rsp, 16
+   158 00000169 F30F7F55F0              	movdqu		[rbp - 16], xmm2
+   159 0000016E F30F6F1425-             	movdqu		xmm2, [.bytereverse]		; load mask in xmm2
+   159 00000173 [85000000]         
+   160 00000177 660F3800C2              	pshufb		xmm0, xmm2
+   161 0000017C F30F6F55F0              	movdqu		xmm2, [rbp - 16]		; pop xmm2
+   162                                  
+   163 00000181 C9                      	leave						
+   164 00000182 C3                      	ret						; returns shuffled xmm0
