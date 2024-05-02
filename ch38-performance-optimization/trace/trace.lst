@@ -1,0 +1,339 @@
+     1                                  ; trace.asm
+     2                                  extern printf
+     3                                  
+     4                                  section .data
+     5 00000000 3878382053494E474C-     	fmt0	db	"8x8 SINGLE PRECISION FLOATING POINT MATRIX TRACE",10,0
+     5 00000009 452050524543495349-
+     5 00000012 4F4E20464C4F415449-
+     5 0000001B 4E4720504F494E5420-
+     5 00000024 4D4154524958205452-
+     5 0000002D 4143450A00         
+     6 00000032 0A5468697320697320-     	fmt1	db	10,"This is the matrix:",10,0
+     6 0000003B 746865206D61747269-
+     6 00000044 783A0A00           
+     7 00000048 0A5468697320697320-     	fmt2	db	10,"This is the trace (sequential version): %f",10,0
+     7 00000051 746865207472616365-
+     7 0000005A 202873657175656E74-
+     7 00000063 69616C207665727369-
+     7 0000006C 6F6E293A2025660A00 
+     8 00000075 546869732069732074-     	fmt5	db	"This is the trace (AVX blend version): %f",10,0
+     8 0000007E 686520747261636520-
+     8 00000087 2841565820626C656E-
+     8 00000090 642076657273696F6E-
+     8 00000099 293A2025660A00     
+     9 000000A0 0A5468697320697320-     	fmt6	db	10,"This is the transpose:",10,0
+     9 000000A9 746865207472616E73-
+     9 000000B2 706F73653A0A00     
+    10 000000B9 53657175656E746961-     	fmt30	db	"Sequential version elapsed cycles: %u",10,0
+    10 000000C2 6C2076657273696F6E-
+    10 000000CB 20656C617073656420-
+    10 000000D4 6379636C65733A2025-
+    10 000000DD 750A00             
+    11 000000E0 41565820626C656E64-     	fmt31	db	"AVX blend version elapsed cycles: %d",10,10,0
+    11 000000E9 2076657273696F6E20-
+    11 000000F2 656C61707365642063-
+    11 000000FB 79636C65733A202564-
+    11 00000104 0A0A00             
+    12 00000107 0A4E756D626572206F-     	fmt4	db	10,"Number of loops:%d",10,0
+    12 00000110 66206C6F6F70733A25-
+    12 00000119 640A00             
+    13                                  
+    14 0000011C 90<rep 4h>              	align	32
+    15 00000120 0000803F0000004000-     	matrix	dd	1.,	2.,	3.,	4.,	5.,	6.,	7.,	8.
+    15 00000129 004040000080400000-
+    15 00000132 A0400000C0400000E0-
+    15 0000013B 4000000041         
+    16 00000140 000010410000204100-     		dd	9.,	10.,	11.,	12.,	13.,	14.,	15.,	16.
+    16 00000149 003041000040410000-
+    16 00000152 504100006041000070-
+    16 0000015B 4100008041         
+    17 00000160 000088410000904100-     		dd	17.,	18.,	19.,	20.,	21.,	22.,	23.,	24.
+    17 00000169 0098410000A0410000-
+    17 00000172 A8410000B0410000B8-
+    17 0000017B 410000C041         
+    18 00000180 0000C8410000D04100-     		dd	25.,	26.,	27.,	28.,	29.,	30.,	31.,	32.
+    18 00000189 00D8410000E0410000-
+    18 00000192 E8410000F0410000F8-
+    18 0000019B 4100000042         
+    19 000001A0 000004420000084200-     		dd	33.,	34.,	35.,	36.,	37.,	38.,	39.,	40.
+    19 000001A9 000C42000010420000-
+    19 000001B2 14420000184200001C-
+    19 000001BB 4200002042         
+    20 000001C0 000024420000284200-     		dd	41.,	42.,	43.,	44.,	45.,	46.,	47.,	48.
+    20 000001C9 002C42000030420000-
+    20 000001D2 34420000384200003C-
+    20 000001DB 4200004042         
+    21 000001E0 000044420000484200-     		dd	49.,	50.,	51.,	52.,	53.,	54.,	55.,	56.
+    21 000001E9 004C42000050420000-
+    21 000001F2 54420000584200005C-
+    21 000001FB 4200006042         
+    22 00000200 000064420000684200-     		dd	57.,	58.,	59.,	60.,	61.,	62.,	63.,	64.
+    22 00000209 006C42000070420000-
+    22 00000212 74420000784200007C-
+    22 0000021B 4200008042         
+    23                                  
+    24 00000220 E803000000000000        	loops	dq	1000
+    25 00000228 000000000100000004-     	permps	dd	0,1,4,5,2,3,6,7		; mask for permutation sp values in ymm
+    25 00000231 000000050000000200-
+    25 0000023A 000003000000060000-
+    25 00000243 0007000000         
+    26                                  
+    27                                  section .bss
+    28                                  	alignb		32
+    29 00000000 <res 80h>               	transpose	resq	16
+    30                                  
+    31 00000080 ????????????????        	trace		resq	1
+    32                                  
+    33 00000088 ????????????????        	bbhi_cy		resq	1
+    34 00000090 ????????????????        	bblo_cy		resq	1
+    35 00000098 ????????????????        	ebhi_cy		resq	1
+    36 000000A0 ????????????????        	eblo_cy		resq	1
+    37                                  
+    38 000000A8 ????????????????        	bshi_cy		resq	1
+    39 000000B0 ????????????????        	bslo_cy		resq	1
+    40 000000B8 ????????????????        	eshi_cy		resq	1
+    41 000000C0 ????????????????        	eslo_cy		resq	1
+    42                                  
+    43                                  section .text
+    44                                  	global main
+    45                                  main:
+    46 00000000 55                      	push	rbp
+    47 00000001 4889E5                  	mov	rbp, rsp
+    48                                  
+    49                                  	; print title
+    50 00000004 48BF-                   	mov	rdi, fmt0
+    50 00000006 [0000000000000000] 
+    51 0000000E E8(00000000)            	call	printf
+    52                                  
+    53                                  	; print matrix
+    54 00000013 48BF-                   	mov	rdi, fmt1
+    54 00000015 [3200000000000000] 
+    55 0000001D E8(00000000)            	call	printf
+    56 00000022 48BE-                   	mov	rsi, matrix
+    56 00000024 [2001000000000000] 
+    57 0000002C E802020000              	call	printm8x8
+    58                                  
+    59                                  	; SEQUENTIAL VERSION
+    60                                  	; compute trace
+    61 00000031 48BF-                   	mov	rdi, matrix
+    61 00000033 [2001000000000000] 
+    62 0000003B 488B3425[20020000]      	mov	rsi, [loops]
+    63                                  
+    64                                  	; start measuring cycles
+    65 00000043 0FA2                    	cpuid
+    66 00000045 0F31                    	rdtsc
+    67 00000047 891425[A8000000]        	mov	[bshi_cy], edx
+    68 0000004E 890425[B0000000]        	mov	[bslo_cy], eax
+    69                                  
+    70 00000055 E810010000              	call	seq_trace
+    71                                  
+    72                                  	; stop measuring cycles
+    73 0000005A 0F01F9                  	rdtscp
+    74 0000005D 891425[B8000000]        	mov	[eshi_cy], edx
+    75 00000064 890425[C0000000]        	mov	[eslo_cy], eax
+    76 0000006B 0FA2                    	cpuid
+    77                                  
+    78                                  	; print the result
+    79 0000006D 48BF-                   	mov	rdi, fmt2
+    79 0000006F [4800000000000000] 
+    80 00000077 B801000000              	mov	rax, 1
+    81 0000007C E8(00000000)            	call	printf
+    82                                  
+    83                                  	; BLEND VERSION
+    84                                  	; compute trace
+    85 00000081 48BF-                   	mov	rdi, matrix
+    85 00000083 [2001000000000000] 
+    86 0000008B 488B3425[20020000]      	mov	rsi, [loops]
+    87                                  
+    88                                  	; start measuring cycles
+    89 00000093 0FA2                    	cpuid
+    90 00000095 0F31                    	rdtsc
+    91 00000097 891425[88000000]        	mov	[bbhi_cy], edx
+    92 0000009E 890425[90000000]        	mov	[bblo_cy], eax
+    93                                  
+    94 000000A5 E8E9000000              	call	blend_trace
+    95                                  
+    96                                  	; stop measuring cycles
+    97 000000AA 0F01F9                  	rdtscp
+    98 000000AD 891425[98000000]        	mov	[ebhi_cy], edx
+    99 000000B4 890425[A0000000]        	mov	[eblo_cy], eax
+   100 000000BB 0FA2                    	cpuid
+   101                                  
+   102                                  	; print result
+   103 000000BD 48BF-                   	mov	rdi, fmt5
+   103 000000BF [7500000000000000] 
+   104 000000C7 B801000000              	mov	rax, 1
+   105 000000CC E8(00000000)            	call	printf
+   106                                  
+   107                                  	; print loops
+   108 000000D1 48BF-                   	mov	rdi, fmt4
+   108 000000D3 [0701000000000000] 
+   109 000000DB 488B3425[20020000]      	mov	rsi, [loops]
+   110 000000E3 E8(00000000)            	call	printf
+   111                                  
+   112                                  	; print cycles
+   113                                  	; sequential version's cycles
+   114 000000E8 488B1425[C0000000]      	mov	rdx, [eslo_cy]
+   115 000000F0 488B3425[B8000000]      	mov	rsi, [eshi_cy]
+   116 000000F8 48C1E620                	shl	rsi, 32
+   117 000000FC 4809D6                  	or	rsi, rdx
+   118                                  
+   119 000000FF 4C8B0425[B0000000]      	mov	r8, [bslo_cy]
+   120 00000107 4C8B0C25[A8000000]      	mov	r9, [bshi_cy]
+   121 0000010F 49C1E120                	shl	r9, 32
+   122 00000113 4D09C1                  	or	r9, r8
+   123                                  
+   124 00000116 4C29CE                  	sub	rsi, r9
+   125                                  
+   126 00000119 48BF-                   	mov	rdi, fmt30
+   126 0000011B [B900000000000000] 
+   127 00000123 E8(00000000)            	call	printf
+   128                                  
+   129                                  	; AVX blend version's cycles
+   130 00000128 488B1425[A0000000]      	mov	rdx, [eblo_cy]
+   131 00000130 488B3425[98000000]      	mov	rsi, [ebhi_cy]
+   132 00000138 48C1E620                	shl	rsi, 32
+   133 0000013C 4809D6                  	or	rsi, rdx
+   134 0000013F 4C8B0425[90000000]      	mov	r8, [bblo_cy]
+   135 00000147 4C8B0C25[88000000]      	mov	r9, [bbhi_cy]
+   136 0000014F 49C1E120                	shl	r9, 32
+   137 00000153 4D09C1                  	or	r9, r8
+   138                                  
+   139 00000156 4C29CE                  	sub	rsi, r9
+   140                                  
+   141 00000159 48BF-                   	mov	rdi, fmt31
+   141 0000015B [E000000000000000] 
+   142 00000163 E8(00000000)            	call	printf
+   143                                  
+   144 00000168 C9                      	leave
+   145 00000169 C3                      	ret
+   146                                  
+   147                                  ;----------------------------------------------------------------------------------------------------------------
+   148                                  seq_trace:
+   149 0000016A 55                      	push	rbp
+   150 0000016B 4889E5                  	mov	rbp, rsp
+   151                                  
+   152                                  	.loop0:
+   153 0000016E 660FEFC0                		pxor		xmm0, xmm0
+   154 00000172 B908000000              		mov		rcx, 8
+   155 00000177 4831C0                  		xor		rax, rax
+   156 0000017A 4831DB                  		xor		rbx, rbx
+   157                                  
+   158                                  		.loop:
+   159 0000017D F30F580407              			addss	xmm0, [rdi + rax]
+   160 00000182 4883C024                			add	rax, 36			; each row is 32 bytes
+   161                                  		
+   162 00000186 E2F5                    		loop		.loop
+   163 00000188 F30F5AC0                		cvtss2sd	xmm0, xmm0
+   164 0000018C 48FFCE                  		dec		rsi
+   165 0000018F 75DD                    		jnz		.loop0
+   166                                  
+   167 00000191 C9                      	leave
+   168 00000192 C3                      	ret
+   169                                  
+   170                                  ;-----------------------------------------------------------------------------------------------------------
+   171                                  
+   172                                  blend_trace:
+   173 00000193 55                      	push	rbp
+   174 00000194 4889E5                  	mov	rbp, rsp
+   175                                  
+   176                                  	.loop:
+   177                                  		; build matrix in memory
+   178 00000197 C5FC2807                		vmovaps		ymm0, [rdi]
+   179 0000019B C5FC284F20              		vmovaps		ymm1, [rdi + 32]
+   180 000001A0 C5FC285740              		vmovaps		ymm2, [rdi + 64]
+   181 000001A5 C5FC285F60              		vmovaps		ymm3, [rdi + 96]
+   182 000001AA C5FC28A780000000        		vmovaps		ymm4, [rdi + 128]
+   183 000001B2 C5FC28AFA0000000        		vmovaps		ymm5, [rdi + 160]
+   184 000001BA C5FC28B7C0000000        		vmovaps		ymm6, [rdi + 192]
+   185 000001C2 C5FC28BFE0000000        		vmovaps		ymm7, [rdi + 224]
+   186                                  
+   187 000001CA C4E37D0CC102            		vblendps	ymm0, ymm0, ymm1, 00000010b
+   188 000001D0 C4E37D0CC204            		vblendps	ymm0, ymm0, ymm2, 00000100b
+   189 000001D6 C4E37D0CC308            		vblendps	ymm0, ymm0, ymm3, 00001000b
+   190 000001DC C4E37D0CC410            		vblendps	ymm0, ymm0, ymm4, 00010000b
+   191 000001E2 C4E37D0CC520            		vblendps	ymm0, ymm0, ymm5, 00100000b
+   192 000001E8 C4E37D0CC640            		vblendps	ymm0, ymm0, ymm6, 01000000b
+   193 000001EE C4E37D0CC780            		vblendps	ymm0, ymm0, ymm7, 10000000b
+   194                                  
+   195 000001F4 C5FF7CC0                		vhaddps		ymm0, ymm0, ymm0
+   196 000001F8 C5FE6F0C25-             		vmovdqu		ymm1, [permps]
+   196 000001FD [28020000]         
+   197 00000201 C4E27516C0              		vpermps		ymm0, ymm1, ymm0
+   198 00000206 F20F7CC0                		haddps		xmm0, xmm0
+   199 0000020A C4C37917C000            		vextractps	r8d, xmm0, 0
+   200 00000210 C4C37917C101            		vextractps	r9d, xmm0, 1
+   201 00000216 C4C1796EC0              		vmovd		xmm0, r8d
+   202 0000021B C4C1796EC9              		vmovd		xmm1, r9d
+   203 00000220 C5FA58C1                		vaddss		xmm0, xmm0, xmm1
+   204 00000224 48FFCE                  		dec		rsi
+   205 00000227 0F856AFFFFFF            		jnz		.loop
+   206                                  
+   207 0000022D F30F5AC0                	cvtss2sd	xmm0, xmm0
+   208                                  
+   209 00000231 C9                      	leave
+   210 00000232 C3                      	ret
+   211                                  
+   212                                  ;---------------------------------------------------------------------------------------------------------
+   213                                  
+   214                                  printm8x8:
+   215                                  section .data
+   216 00000248 252E662C09252E662C-     	.fmt	db	"%.f,",9,"%.f,",9,"%.f,",9,"%.f,",9,"%.f,",9,"%.f,",9,"%.f,",9,"%.f",10,0
+   216 00000251 09252E662C09252E66-
+   216 0000025A 2C09252E662C09252E-
+   216 00000263 662C09252E662C0925-
+   216 0000026C 2E660A00           
+   217                                  section .text
+   218 00000233 55                      	push	rbp
+   219 00000234 4889E5                  	mov	rbp, rsp
+   220                                  
+   221 00000237 53                      	push	rbx		; callee saved
+   222 00000238 48BF-                   	mov	rdi, .fmt
+   222 0000023A [4802000000000000] 
+   223 00000242 B908000000              	mov	rcx, 8
+   224 00000247 4831DB                  	xor	rbx, rbx	; row counter
+   225 0000024A C5FC77                  	vzeroall
+   226                                  
+   227                                  	.loop:
+   228 0000024D F30F10041E              		movss		xmm0, dword[rsi + rbx]
+   229 00000252 F30F5AC0                		cvtss2sd	xmm0, xmm0
+   230 00000256 F30F104C1E04            		movss		xmm1, [rsi + rbx + 4]
+   231 0000025C F30F5AC9                		cvtss2sd	xmm1, xmm1
+   232 00000260 F30F10541E08            		movss		xmm2, [rsi + rbx + 8]
+   233 00000266 F30F5AD2                		cvtss2sd	xmm2, xmm2
+   234 0000026A F30F105C1E0C            		movss		xmm3, [rsi + rbx + 12]
+   235 00000270 F30F5ADB                		cvtss2sd	xmm3, xmm3
+   236 00000274 F30F10641E10            		movss		xmm4, [rsi + rbx + 16]
+   237 0000027A F30F5AE4                		cvtss2sd	xmm4, xmm4
+   238 0000027E F30F106C1E14            		movss		xmm5, [rsi + rbx + 20]
+   239 00000284 F30F5AED                		cvtss2sd	xmm5, xmm5
+   240 00000288 F30F10741E18            		movss		xmm6, [rsi + rbx + 24]
+   241 0000028E F30F5AF6                		cvtss2sd	xmm6, xmm6
+   242 00000292 F30F107C1E1C            		movss		xmm7, [rsi + rbx + 28]
+   243 00000298 F30F5AFF                		cvtss2sd	xmm7, xmm7
+   244 0000029C B808000000              		mov		rax, 8
+   245                                  		
+   246 000002A1 51                      		push		rcx			; caller saved
+   247 000002A2 56                      		push		rsi			; caller saved
+   248 000002A3 57                      		push		rdi			; caller saved
+   249                                  
+   250                                  		; align stack if needed
+   251 000002A4 4D31FF                  		xor		r15, r15
+   252 000002A7 48F7C40F000000          		test		rsp, 0fh		; last byte is 8 (not aligned)?
+   253 000002AE 410F95C7                		setnz		r15b			; set if not aligned
+   254 000002B2 49C1E703                		shl		r15, 3			; multiply by 8
+   255 000002B6 4C29FC                  		sub		rsp, r15		; subtract 0 or 8
+   256 000002B9 E8(00000000)            		call		printf
+   257 000002BE 4C01FC                  		add		rsp, r15		; add 0 or 8
+   258                                  
+   259 000002C1 5F                      		pop		rdi
+   260 000002C2 5E                      		pop		rsi
+   261 000002C3 59                      		pop		rcx
+   262                                  
+   263 000002C4 4883C320                		add		rbx, 32			; next row
+   264 000002C8 E283                    		loop		.loop
+   265                                  
+   266 000002CA 5B                      	pop	rbx		; callee saved
+   267                                  
+   268 000002CB C9                      	leave
+   269 000002CC C3                      	ret
